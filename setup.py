@@ -16,12 +16,10 @@ setup(
     packages=find_packages(),
     python_requires='>=3.0',
     install_requires=[
-        'aws-psycopg2',
         'boto3',
         'elasticsearch==7.13.4',
         'jsonref',
         'jsonpickle',
-        'psycopg2-binary',
         'pyyaml',
         'requests-aws4auth',
         'simplejson'
