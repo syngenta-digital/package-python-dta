@@ -1,3 +1,10 @@
+from __future__ import annotations
+import typing
+from typing import TypedDict
+if typing.TYPE_CHECKING:
+    from typing import Any, Dict, Optional, MutableMapping, Union, Collection, Tuple
+    from typing_extensions import Unpack
+from elasticsearch import Elasticsearch
 from syngenta_digital_dta.common import schema_mapper
 from syngenta_digital_dta.common.base_adapter import BaseAdapter
 from syngenta_digital_dta.elasticsearch.es_connection import es_connection
@@ -18,7 +25,7 @@ class ElasticsearchAdapter(BaseAdapter):
         self.user = kwargs.get('user')
         self.password = kwargs.get('password')
         self.size = kwargs.get('size', 10)
-        self.connection = None
+        self.connection: Elasticsearch
         self.__connect()
 
     @es_connection
@@ -87,13 +94,14 @@ class ElasticsearchAdapter(BaseAdapter):
             response = {}
         return response
 
-    def query(self, **kwargs):
+    def query(self, query: Dict[str, Any], *, normalize: bool = False, **kwargs: Unpack[ElasticsearchSearchKwargs]):
         response = self.connection.search(
             index=self.index,
             size=self.size,
-            body={'query': kwargs['query']}
+            body={'query': query},
+            **kwargs
         )
-        if kwargs.get('normalize'):
+        if normalize:
             response = self.__normalize_hits(response)
         return response
 
@@ -134,3 +142,63 @@ class ElasticsearchAdapter(BaseAdapter):
     def __convert_openapi_mapping(self, schema_file, schema_key, special=None):
         mapping = es_mapper.convert_schema_to_mapping(schema_file, schema_key, special)
         return mapping
+
+class ElasticsearchSearchKwargs(TypedDict, total=False):
+    # body: Optional[Any]
+    # index: Optional[Any]
+    doc_type: Optional[Any]
+    _source: Optional[Any]
+    _source_excludes: Optional[Any]
+    _source_includes: Optional[Any]
+    allow_no_indices: Optional[Any]
+    allow_partial_search_results: Optional[Any]
+    analyze_wildcard: Optional[Any]
+    analyzer: Optional[Any]
+    batched_reduce_size: Optional[Any]
+    ccs_minimize_roundtrips: Optional[Any]
+    default_operator: Optional[Any]
+    df: Optional[Any]
+    docvalue_fields: Optional[Any]
+    expand_wildcards: Optional[Any]
+    explain: Optional[Any]
+    from_: Optional[Any]
+    ignore_throttled: Optional[Any]
+    ignore_unavailable: Optional[Any]
+    lenient: Optional[Any]
+    max_concurrent_shard_requests: Optional[Any]
+    min_compatible_shard_node: Optional[Any]
+    pre_filter_shard_size: Optional[Any]
+    preference: Optional[Any]
+    q: Optional[Any]
+    request_cache: Optional[Any]
+    rest_total_hits_as_int: Optional[Any]
+    routing: Optional[Any]
+    scroll: Optional[Any]
+    search_type: Optional[Any]
+    seq_no_primary_term: Optional[Any]
+    # size: Optional[Any]
+    sort: Optional[Any]
+    stats: Optional[Any]
+    stored_fields: Optional[Any]
+    suggest_field: Optional[Any]
+    suggest_mode: Optional[Any]
+    suggest_size: Optional[Any]
+    suggest_text: Optional[Any]
+    terminate_after: Optional[Any]
+    timeout: Optional[Any]
+    track_scores: Optional[Any]
+    track_total_hits: Optional[Any]
+    typed_keys: Optional[Any]
+    version: Optional[Any]
+    pretty: Optional[bool]
+    human: Optional[bool]
+    error_trace: Optional[bool]
+    format: Optional[str]
+    filter_path: Optional[Union[str, Collection[str]]]
+    request_timeout: Optional[Union[int, float]]
+    ignore: Optional[Union[int, Collection[int]]]
+    opaque_id: Optional[str]
+    http_auth: Optional[Union[str, Tuple[str, str]]]
+    api_key: Optional[Union[str, Tuple[str, str]]]
+    params: Optional[MutableMapping[str, Any]]
+    headers: Optional[MutableMapping[str, str]]
