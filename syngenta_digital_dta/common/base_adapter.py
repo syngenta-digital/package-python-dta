@@ -1,11 +1,13 @@
 from __future__ import annotations
 import typing
 from typing import TypedDict
+
+from syngenta_digital_dta.common import publisher
+
 if typing.TYPE_CHECKING:
     from typing import Any, Dict, Optional
     from typing_extensions import Unpack
 
-from syngenta_digital_dta.common import publisher
 
 class BaseAdapter:
 

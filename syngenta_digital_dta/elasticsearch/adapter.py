@@ -1,9 +1,6 @@
 from __future__ import annotations
 import typing
 from typing import TypedDict
-if typing.TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
-    from typing_extensions import Unpack, NotRequired, Required
 
 from elasticsearch import Elasticsearch
 
@@ -11,6 +8,10 @@ from syngenta_digital_dta.common import schema_mapper
 from syngenta_digital_dta.common.base_adapter import BaseAdapter, BaseAdapterKwargs
 from syngenta_digital_dta.elasticsearch.es_connection import es_connection
 from syngenta_digital_dta.elasticsearch import es_mapper
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
+    from typing_extensions import Unpack, NotRequired, Required
 
 class ElasticsearchAdapter(BaseAdapter):
 
@@ -159,7 +160,7 @@ class ElasticsearchAdapterKwargs(BaseAdapterKwargs, total=True):
     user: NotRequired[Optional[str]]
     password: NotRequired[Optional[str]]
     size: NotRequired[Optional[int]]
-    
+
 class ElasticsearchSearchKwargs(TypedDict, total=False):
     """A TypedDict describing the type of **kwargs of the search() method"""
     # body: Optional[Any]
@@ -192,7 +193,7 @@ class ElasticsearchSearchKwargs(TypedDict, total=False):
     rest_total_hits_as_int: Optional[Any]
     routing: Optional[Any]
     scroll: Optional[Any]
-    search_type: Optional[Literal["query_then_fetch", "dfs_query_then_fetch"]]
+    search_type: Optional[Literal['query_then_fetch', 'dfs_query_then_fetch']]
     seq_no_primary_term: Optional[Any]
     # size: Optional[Any]
     sort: Optional[Any]
