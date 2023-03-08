@@ -2,18 +2,19 @@ from __future__ import annotations
 import typing
 from typing import TypedDict
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, Optional, MutableMapping, Union, Collection, Tuple
-    from typing_extensions import Unpack
+    from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
+    from typing_extensions import Unpack, NotRequired, Required
+
 from elasticsearch import Elasticsearch
+
 from syngenta_digital_dta.common import schema_mapper
-from syngenta_digital_dta.common.base_adapter import BaseAdapter
+from syngenta_digital_dta.common.base_adapter import BaseAdapter, BaseAdapterKwargs
 from syngenta_digital_dta.elasticsearch.es_connection import es_connection
 from syngenta_digital_dta.elasticsearch import es_mapper
 
-
 class ElasticsearchAdapter(BaseAdapter):
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Unpack[ElasticsearchAdapterKwargs]):
         super().__init__(**kwargs)
         self.index = kwargs['index']
         self.endpoint = kwargs['endpoint']
@@ -94,7 +95,10 @@ class ElasticsearchAdapter(BaseAdapter):
             response = {}
         return response
 
-    def query(self, query: Dict[str, Any], *, normalize: bool = False, **kwargs: Unpack[ElasticsearchSearchKwargs]):
+    def query(self, query: Dict[str, Any], *, normalize: bool = False, **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
+        # dfs_query_then_fetch improves accuracy of results scoring,
+        # but adds a round-trip to each shard, which can result in slower searches.
+        kwargs.setdefault('search_type', 'dfs_query_then_fetch')
         response = self.connection.search(
             index=self.index,
             size=self.size,
@@ -143,7 +147,21 @@ class ElasticsearchAdapter(BaseAdapter):
         mapping = es_mapper.convert_schema_to_mapping(schema_file, schema_key, special)
         return mapping
 
+class ElasticsearchAdapterKwargs(BaseAdapterKwargs, total=True):
+    """A TypedDict describing the type of **kwargs of the __init__() method"""
+    index: str
+    endpoint: str
+    model_schema_file: str
+    model_schema: Optional[str]
+    model_identifier: Optional[str]
+    authentication: NotRequired[Optional[str]]
+    port: NotRequired[Optional[int]]
+    user: NotRequired[Optional[str]]
+    password: NotRequired[Optional[str]]
+    size: NotRequired[Optional[int]]
+    
 class ElasticsearchSearchKwargs(TypedDict, total=False):
+    """A TypedDict describing the type of **kwargs of the search() method"""
     # body: Optional[Any]
     # index: Optional[Any]
     doc_type: Optional[Any]
@@ -174,7 +192,7 @@ class ElasticsearchSearchKwargs(TypedDict, total=False):
     rest_total_hits_as_int: Optional[Any]
     routing: Optional[Any]
     scroll: Optional[Any]
-    search_type: Optional[Any]
+    search_type: Optional[Literal["query_then_fetch", "dfs_query_then_fetch"]]
     seq_no_primary_term: Optional[Any]
     # size: Optional[Any]
     sort: Optional[Any]
