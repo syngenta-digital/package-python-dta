@@ -1,9 +1,17 @@
+from __future__ import annotations
+import typing
+from typing import TypedDict
+
 from syngenta_digital_dta.common import publisher
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Dict, Optional
+    from typing_extensions import Unpack
 
 
 class BaseAdapter:
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Unpack[BaseAdapterKwargs]):
         self.sns_arn = kwargs.get('sns_arn')
         self.sns_custom = kwargs.get('sns_attributes', {})
         self.sns_defaults = kwargs.get('sns_default_attributes', True)
@@ -48,3 +56,14 @@ class BaseAdapter:
         if self.sns_defaults and not self.sns_custom:
             return self.default_attributes
         return {}
+
+class BaseAdapterKwargs(TypedDict, total=False):
+    """A TypedDict describing the type of **kwargs of the __init__() method"""
+    sns_arn: Optional[str]
+    sns_attributes: Optional[Dict[str, Any]]
+    sns_default_attributes: bool # default is True
+    sns_endpoint: Optional[str]
+    model_schema: Optional[str]
+    model_identifier: Optional[str]
+    model_version_key: Optional[str]
+    author_identifier: Optional[str]

@@ -2,12 +2,12 @@ import uuid
 import unittest
 import warnings
 
-import syngenta_digital_dta
+import syngenta_digital_dta, syngenta_digital_dta.elasticsearch.adapter
 
 
 class ElasticsearchAdapterTest(unittest.TestCase):
 
-    def setUp(self, *args, **kwargs):
+    def setUp(self):
         warnings.simplefilter('ignore', ResourceWarning)
         self.maxDiff = None
         self.adapter = syngenta_digital_dta.adapter(
@@ -292,3 +292,26 @@ class ElasticsearchAdapterTest(unittest.TestCase):
             }
         )
         self.assertEqual(len(response), 0)
+
+    def test_query_search_type(self):
+        query = {
+            "bool": {
+                "must": [
+                    {
+                        "range": {
+                            "start_date_time": {
+                                "gte": "2022-01-01T00:00:00"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+        self.adapter.query(
+            query=query,
+            search_type='query_then_fetch'
+        )
+        self.adapter.query(
+            query=query,
+            search_type='dfs_query_then_fetch'
+        )
