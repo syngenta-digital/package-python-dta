@@ -25,7 +25,6 @@ class S3Adapter(BaseAdapter):
         self.resource = self.__make_resource()
 
     def __make_client(self, config=None):
-        boto3.setup_default_session(profile_name='databus-dev')
         return boto3.client(
             's3',
             endpoint_url=self.endpoint,
