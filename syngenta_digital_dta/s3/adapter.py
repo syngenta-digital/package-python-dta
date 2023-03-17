@@ -105,6 +105,21 @@ class S3Adapter(BaseAdapter):
         if kwargs.get('publish', True):
             super().publish('create', self.__generate_publish_data(**kwargs), **kwargs)
 
+    def download_stream(self, **kwargs):
+        conf = boto3.s3.transfer.TransferConfig(
+            multipart_threshold=kwargs.get('threshold', 10000),
+            max_concurrency=kwargs.get('concurrency', 4)
+        )
+
+        self.client.download_fileobj(
+            self.bucket,
+            kwargs['s3_path'],
+            kwargs['io'],
+            Config=conf
+        )
+
+        kwargs['io'].seek(0)
+
     def delete(self, **kwargs):
         result = self.client.delete_object(
             Bucket=self.bucket,
@@ -263,7 +278,6 @@ class S3Adapter(BaseAdapter):
             return result_tags
         except AttributeError as error:
             raise TypeError(' tags parameter is invalid, it should be Dict object') from error
-
 
     def __construct_tags_string(self, **kwargs):
         tags = kwargs.get('tags' , None)
