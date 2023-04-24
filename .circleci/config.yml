@@ -92,7 +92,7 @@ jobs:
                     MONGO_INITDB_ROOT_USERNAME: root
                     MONGO_INITDB_ROOT_PASSWORD: Lq4nKg&&TRhHv%7z
             -
-                image: localstack/localstack-full:latest
+                image: localstack/localstack:latest
                 environment:
                     - SERVICES=s3
                     - DEBUG=1
