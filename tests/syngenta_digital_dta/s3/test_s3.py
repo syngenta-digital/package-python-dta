@@ -168,7 +168,7 @@ class S3AdapterTest(unittest.TestCase):
         s3_path = 'test/test-multipart.json'
         results = self.adapter.multipart_upload(chunks=chunks, s3_path=s3_path)
         self.assertEqual(results['ResponseMetadata']['HTTPStatusCode'], 200)
-        self.assertEqual(results['Location'], 'http://localhost:4566/unit-test/test/test-multipart.json')
+        self.assertEqual(results['Location'], 'http://unit-test.s3.localhost.localstack.cloud:4566/test/test-multipart.json')
 
     def test_create_presigned_read_url(self):
         s3_path = 'test/test-presigned-url.json'
