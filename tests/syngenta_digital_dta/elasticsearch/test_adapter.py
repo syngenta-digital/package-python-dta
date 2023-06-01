@@ -1,5 +1,6 @@
 import uuid
 import unittest
+from unittest import mock
 import warnings
 
 import syngenta_digital_dta, syngenta_digital_dta.elasticsearch.adapter
@@ -104,6 +105,11 @@ class ElasticsearchAdapterTest(unittest.TestCase):
         except Exception as e:
             print(e)
             self.assertEqual(False, True)
+
+    def test_get_mapping(self):
+        self.adapter.connection = mock.Mock()
+        self.adapter.get_mapping()
+        self.adapter.connection.indices.get_mapping.assert_called_once_with("users")
 
     def test_create(self):
         data = {

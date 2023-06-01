@@ -51,6 +51,9 @@ class ElasticsearchAdapter(BaseAdapter):
                 create_args['body'] = self.__create_template_body(**kwargs)
             self.connection.indices.create(**create_args)
 
+    def get_mapping(self):
+        return self.connection.indices.get_mapping(self.index)
+
     def create(self, **kwargs):
         data = schema_mapper.map_to_schema(kwargs['data'], self.model_schema_file, self.model_schema)
         response = self.connection.index(
