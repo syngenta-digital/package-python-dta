@@ -107,6 +107,12 @@ class ElasticsearchAdapterTest(unittest.TestCase):
             self.assertEqual(False, True)
 
     def test_get_mapping(self):
+        try:
+            self.adapter.get_mapping()
+            self.assertTrue(True)
+        except Exception as e:
+            print(e)
+            self.assertTrue(False)
         self.adapter.connection = mock.Mock()
         self.adapter.get_mapping()
         self.adapter.connection.indices.get_mapping.assert_called_once_with("users")
