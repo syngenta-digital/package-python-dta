@@ -96,8 +96,10 @@ class ElasticsearchAdapter(BaseAdapter):
             elif operation == 'overwrite':
                 return self.overwrite(**kwargs)
 
-        else:
-            return self.create(**kwargs)
+            else:
+                raise Exception(f"Input operation '{operation}' not supported!")
+
+        return self.create(**kwargs)
 
     def delete(self, identifier_value, **kwargs):
         response = self.connection.delete(
@@ -113,9 +115,9 @@ class ElasticsearchAdapter(BaseAdapter):
             response = self.connection.get(index=self.index, id=identifier_value)
             if kwargs.get('normalize'):
                 response = response.get('_source')
-        except:
-            response = {}
-        return response
+            return response
+        except BaseException:
+            return {}
 
     def query(self, query: Dict[str, Any], *, normalize: bool = False,
               **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
