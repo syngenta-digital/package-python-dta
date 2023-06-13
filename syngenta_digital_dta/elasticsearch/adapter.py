@@ -93,11 +93,10 @@ class ElasticsearchAdapter(BaseAdapter):
             if operation == 'update':
                 return self.update(**kwargs)
 
-            elif operation == 'overwrite':
+            if operation == 'overwrite':
                 return self.overwrite(**kwargs)
 
-            else:
-                raise Exception(f"Input operation '{operation}' not supported!")
+            raise Exception(f'Input operation "{operation}" not supported!')
 
         return self.create(**kwargs)
 
