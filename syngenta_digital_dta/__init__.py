@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing
 from typing import Optional, Literal, overload
+
 if typing.TYPE_CHECKING:
     from typing_extensions import Unpack
     from syngenta_digital_dta.dynamodb.adapter import DynamodbAdapter
@@ -12,22 +13,36 @@ if typing.TYPE_CHECKING:
 
 EngineID = Literal['dynamodb', 'redshift', 'postgres', 'elasticsearch', 's3', 'file_system', 'mongo']
 
+
 @overload
 def adapter(engine: Literal['dynamodb'], **kwargs) -> DynamodbAdapter: ...
+
+
 @overload
 def adapter(engine: Literal['redshift'], **kwargs) -> PostgresAdapter: ...
+
+
 @overload
 def adapter(engine: Literal['postgres'], **kwargs) -> PostgresAdapter: ...
+
+
 @overload
 def adapter(engine: Literal['elasticsearch'], **kwargs: Unpack[ElasticsearchAdapterKwargs]) -> ElasticsearchAdapter: ...
+
+
 @overload
 def adapter(engine: Literal['s3'], **kwargs) -> S3Adapter: ...
+
+
 @overload
 def adapter(engine: Literal['file_system'], **kwargs) -> FileSystemAdapter: ...
+
+
 @overload
 def adapter(engine: Literal['mongo'], **kwargs) -> MongoAdapter: ...
 
-def adapter(engine: Optional[EngineID] = None, **kwargs): # pylint: disable=R0911
+
+def adapter(engine: Optional[EngineID] = None, **kwargs):  # pylint: disable=R0911
     # engine=engine is not needed in the constructor calls below
     # because none of them use an 'engine' keyword argument
     if engine == 'dynamodb':
