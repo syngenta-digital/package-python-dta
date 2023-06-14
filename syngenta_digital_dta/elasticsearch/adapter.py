@@ -80,7 +80,7 @@ class ElasticsearchAdapter(BaseAdapter):
             index=self.index,
             id=data[self.model_identifier],
             body=data,
-            op_type='index',  # `"opType must be 'create' or 'index'`
+            op_type='index',  # `...opType must be 'create' or 'index'...`
             refresh=kwargs.get('refresh', True)
         )
         super().publish('overwrite', data, **kwargs)
