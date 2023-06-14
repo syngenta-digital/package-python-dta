@@ -13,6 +13,7 @@ if typing.TYPE_CHECKING:
     from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
     from typing_extensions import Unpack, NotRequired, Required
 
+
 class ElasticsearchAdapter(BaseAdapter):
 
     def __init__(self, **kwargs: Unpack[ElasticsearchAdapterKwargs]):
@@ -73,9 +74,30 @@ class ElasticsearchAdapter(BaseAdapter):
         super().publish('update', kwargs['data'], **kwargs)
         return response
 
+    def overwrite(self, **kwargs):
+        data = schema_mapper.map_to_schema(kwargs['data'], self.model_schema_file, self.model_schema)
+        response = self.connection.index(
+            index=self.index,
+            id=data[self.model_identifier],
+            body=data,
+            op_type='index',  # `...opType must be 'create' or 'index'...`
+            refresh=kwargs.get('refresh', True)
+        )
+        super().publish('overwrite', data, **kwargs)
+        return response
+
     def upsert(self, **kwargs):
+        operation = kwargs.get('operation', 'update')
+
         if self.connection.exists(index=self.index, id=kwargs['data'][self.model_identifier]):
-            return self.update(**kwargs)
+            if operation == 'update':
+                return self.update(**kwargs)
+
+            if operation == 'overwrite':
+                return self.overwrite(**kwargs)
+
+            raise Exception(f'Input operation "{operation}" not supported!')
+
         return self.create(**kwargs)
 
     def delete(self, identifier_value, **kwargs):
@@ -92,11 +114,12 @@ class ElasticsearchAdapter(BaseAdapter):
             response = self.connection.get(index=self.index, id=identifier_value)
             if kwargs.get('normalize'):
                 response = response.get('_source')
-        except:
-            response = {}
-        return response
+            return response
+        except BaseException:
+            return {}
 
-    def query(self, query: Dict[str, Any], *, normalize: bool = False, **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
+    def query(self, query: Dict[str, Any], *, normalize: bool = False,
+              **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
         # dfs_query_then_fetch improves accuracy of results scoring,
         # but adds a round-trip to each shard, which can result in slower searches.
         kwargs.setdefault('search_type', 'dfs_query_then_fetch')
@@ -148,6 +171,7 @@ class ElasticsearchAdapter(BaseAdapter):
         mapping = es_mapper.convert_schema_to_mapping(schema_file, schema_key, special)
         return mapping
 
+
 class ElasticsearchAdapterKwargs(BaseAdapterKwargs, total=True):
     """A TypedDict describing the type of **kwargs of the __init__() method"""
     index: str
@@ -160,6 +184,7 @@ class ElasticsearchAdapterKwargs(BaseAdapterKwargs, total=True):
     user: NotRequired[Optional[str]]
     password: NotRequired[Optional[str]]
     size: NotRequired[Optional[int]]
+
 
 class ElasticsearchSearchKwargs(TypedDict, total=False):
     """A TypedDict describing the type of **kwargs of the search() method"""
