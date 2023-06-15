@@ -89,7 +89,7 @@ class ElasticsearchAdapter(BaseAdapter):
     def upsert(self, **kwargs):
         operation = kwargs.get('operation', 'update')
 
-        if self.connection.exists(index=self.index, id=kwargs['data'][self.model_identifier]):
+        if self.connection.exists(index=self.index, id=kwargs['data'][self.model_identifier], refresh=True):
             if operation == 'update':
                 return self.update(**kwargs)
 
