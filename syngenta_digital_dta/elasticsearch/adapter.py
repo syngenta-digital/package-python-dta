@@ -75,14 +75,15 @@ class ElasticsearchAdapter(BaseAdapter):
         return response
 
     def overwrite(self, **kwargs):
+        data = schema_mapper.map_to_schema(kwargs['data'], self.model_schema_file, self.model_schema)
         response = self.connection.index(
             index=self.index,
-            id=kwargs['data'][self.model_identifier],
-            body={'doc': kwargs['data']},
+            id=data[self.model_identifier],
+            body=data,
             op_type='index',  # `...opType must be 'create' or 'index'...`
             refresh=kwargs.get('refresh', True)
         )
-        super().publish('overwrite', kwargs['data'], **kwargs)
+        super().publish('overwrite', data, **kwargs)
         return response
 
     def upsert(self, **kwargs):
