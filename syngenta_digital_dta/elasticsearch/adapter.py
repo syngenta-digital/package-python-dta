@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing
 from typing import TypedDict
 
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, exceptions
 
 from syngenta_digital_dta.common import schema_mapper
 from syngenta_digital_dta.common.base_adapter import BaseAdapter, BaseAdapterKwargs
@@ -87,18 +87,18 @@ class ElasticsearchAdapter(BaseAdapter):
         return response
 
     def upsert(self, **kwargs):
-        operation = kwargs.get('operation', 'update')
+        try:
+            return self.create(**kwargs)
+        except exceptions.ConflictError as error:
+            operation = kwargs.get('operation', 'update')
 
-        if self.connection.exists(index=self.index, id=kwargs['data'][self.model_identifier], refresh=True):
             if operation == 'update':
                 return self.update(**kwargs)
 
             if operation == 'overwrite':
                 return self.overwrite(**kwargs)
 
-            raise Exception(f'Input operation "{operation}" not supported!')
-
-        return self.create(**kwargs)
+            raise Exception(f'Input operation "{operation}" not supported!') from error
 
     def delete(self, identifier_value, **kwargs):
         response = self.connection.delete(
