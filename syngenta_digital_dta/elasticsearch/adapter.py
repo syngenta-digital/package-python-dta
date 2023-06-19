@@ -89,7 +89,7 @@ class ElasticsearchAdapter(BaseAdapter):
     def upsert(self, **kwargs):
         try:
             return self.create(**kwargs)
-        except exceptions.ConflictError:
+        except exceptions.ConflictError as error:
             operation = kwargs.get('operation', 'update')
 
             if operation == 'update':
@@ -98,7 +98,7 @@ class ElasticsearchAdapter(BaseAdapter):
             if operation == 'overwrite':
                 return self.overwrite(**kwargs)
 
-            raise Exception(f'Input operation "{operation}" not supported!')
+            raise Exception(f'Input operation "{operation}" not supported!') from error
 
     def delete(self, identifier_value, **kwargs):
         response = self.connection.delete(
