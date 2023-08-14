@@ -10,7 +10,7 @@ from syngenta_digital_dta.elasticsearch.es_connection import es_connection
 from syngenta_digital_dta.elasticsearch import es_mapper
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
+    from typing import Literal, MutableMapping, Union, Collection, Tuple
     from typing_extensions import Unpack, NotRequired, Required
 
 
@@ -150,7 +150,7 @@ class ElasticsearchAdapter(BaseAdapter):
             body['index_patterns'] = [index_patterns]
         return body
 
-    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[str, Any]:
+    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[str, Any]: # pylint: disable=unused-argument
         if settings:
             return settings
         return {
