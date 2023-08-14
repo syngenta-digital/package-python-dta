@@ -1,6 +1,6 @@
 from __future__ import annotations
 import typing
-from typing import TypedDict
+from typing import Any, TypedDict, Optional, Dict
 
 from elasticsearch import Elasticsearch, exceptions
 
@@ -10,7 +10,7 @@ from syngenta_digital_dta.elasticsearch.es_connection import es_connection
 from syngenta_digital_dta.elasticsearch import es_mapper
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Dict, Optional, Literal, MutableMapping, Union, Collection, Tuple
+    from typing import Literal, MutableMapping, Union, Collection, Tuple
     from typing_extensions import Unpack, NotRequired, Required
 
 
@@ -44,11 +44,11 @@ class ElasticsearchAdapter(BaseAdapter):
             body=body
         )
 
-    def create_index(self, **kwargs):
+    def create_index(self, template=True, **kwargs):
         if not self.connection.indices.exists(self.index):
             create_args = {}
             create_args['index'] = self.index
-            if kwargs.get('template', True):
+            if template:
                 create_args['body'] = self.__create_template_body(**kwargs)
             self.connection.indices.create(**create_args)
 
@@ -139,21 +139,21 @@ class ElasticsearchAdapter(BaseAdapter):
             normalized_hits.append(hit['_source'])
         return normalized_hits
 
-    def __create_template_body(self, **kwargs):
+    def __create_template_body(self, use_patterns: bool = False, index_patterns=None, mappings: Optional[Dict[str, Any]] = None, special=None, **kwargs):
         body = {
             'settings': self.__get_settings(**kwargs),
-            'mappings': self.__convert_openapi_mapping(self.model_schema_file, self.model_schema, kwargs.get('special'))
+            'mappings': mappings if mappings is not None else es_mapper.convert_schema_to_mapping(self.model_schema_file, self.model_schema, special)
         }
-        if kwargs.get('use_patterns') and isinstance(kwargs['index_patterns'], list):
-            body['index_patterns'] = kwargs['index_patterns']
-        elif kwargs.get('use_patterns'):
-            body['index_patterns'] = [kwargs['index_patterns']]
+        if use_patterns and isinstance(index_patterns, list):
+            body['index_patterns'] = index_patterns
+        elif use_patterns:
+            body['index_patterns'] = [index_patterns]
         return body
 
-    def __get_settings(self, **kwargs):
-        if kwargs.get('settings'):
-            return kwargs['settings']
-        settings = {
+    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[str, Any]: # pylint: disable=unused-argument
+        if settings:
+            return settings
+        return {
             'number_of_replicas': 1,
             'number_of_shards': 1,
             'analysis': {
@@ -165,11 +165,6 @@ class ElasticsearchAdapter(BaseAdapter):
                 }
             }
         }
-        return settings
-
-    def __convert_openapi_mapping(self, schema_file, schema_key, special=None):
-        mapping = es_mapper.convert_schema_to_mapping(schema_file, schema_key, special)
-        return mapping
 
 
 class ElasticsearchAdapterKwargs(BaseAdapterKwargs, total=True):
