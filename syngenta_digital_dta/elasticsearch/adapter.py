@@ -52,8 +52,9 @@ class ElasticsearchAdapter(BaseAdapter):
                 create_args['body'] = self.__create_template_body(**kwargs)
             self.connection.indices.create(**create_args)
 
-    def create(self, **kwargs):
-        data = schema_mapper.map_to_schema(kwargs['data'], self.model_schema_file, self.model_schema)
+    def create(self, data, *, map_to_schema: bool = True, **kwargs):
+        if map_to_schema:
+            data = schema_mapper.map_to_schema(data, self.model_schema_file, self.model_schema)
         response = self.connection.index(
             index=self.index,
             id=data[self.model_identifier],
@@ -64,18 +65,19 @@ class ElasticsearchAdapter(BaseAdapter):
         super().publish('create', data, **kwargs)
         return response
 
-    def update(self, **kwargs):
+    def update(self, data: dict, **kwargs):
         response = self.connection.update(
             index=self.index,
-            id=kwargs['data'][self.model_identifier],
-            body={'doc': kwargs['data']},
+            id=data[self.model_identifier],
+            body={'doc': data},
             refresh=kwargs.get('refresh', True)
         )
-        super().publish('update', kwargs['data'], **kwargs)
+        super().publish('update', data, **kwargs)
         return response
 
-    def overwrite(self, **kwargs):
-        data = schema_mapper.map_to_schema(kwargs['data'], self.model_schema_file, self.model_schema)
+    def overwrite(self, data: dict, *, map_to_schema: bool = True, **kwargs):
+        if map_to_schema:
+            data = schema_mapper.map_to_schema(data, self.model_schema_file, self.model_schema)
         response = self.connection.index(
             index=self.index,
             id=data[self.model_identifier],
