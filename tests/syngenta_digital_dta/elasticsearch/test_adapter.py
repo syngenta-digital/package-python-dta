@@ -315,3 +315,28 @@ class ElasticsearchAdapterTest(unittest.TestCase):
             query=query,
             search_type='dfs_query_then_fetch'
         )
+
+    def test_query_with_body_and_sort(self):
+        query_normalize_id = uuid.uuid4().hex
+        data = {
+            'user_id': query_normalize_id,
+            'email': 'normal.query@syngenta.com',
+            'first': 'Normal',
+            'last': 'Query',
+            'phone': 5556667777
+        }
+        self.adapter.upsert(data=data)
+
+        response, next_token = self.adapter.query_with_body_and_sort(
+            normalize=True,
+            body={
+                'query': {
+                    'match': {
+                        'first': 'Normal'
+                    }
+                },
+                "sort": [{"_id": "asc"}],
+            }
+        )
+        self.assertGreater(len(response), 0)
+        self.assertIsNotNone(next_token)

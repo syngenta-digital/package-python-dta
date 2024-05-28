@@ -135,6 +135,24 @@ class ElasticsearchAdapter(BaseAdapter):
             response = self.__normalize_hits(response)
         return response
 
+    def query_with_body_and_sort(self, body: Dict[str, Any], *, normalize: bool = False,
+                                 **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
+        # dfs_query_then_fetch improves accuracy of results scoring,
+        # but adds a round-trip to each shard, which can result in slower searches.
+        kwargs.setdefault('search_type', 'dfs_query_then_fetch')
+        response = self.connection.search(
+            index=self.index,
+            size=self.size,
+            body=body,
+            **kwargs
+        )
+        next_token = None
+        if len(response.get('hits', {}).get('hits', [])) > 0:
+            next_token = response['hits']['hits'][-1]['sort'][0]
+        if normalize:
+            response = self.__normalize_hits(response)
+        return response, next_token
+
     def __normalize_hits(self, hits):
         normalized_hits = []
         for hit in hits.get('hits', {}).get('hits', []):
