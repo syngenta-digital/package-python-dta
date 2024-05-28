@@ -147,8 +147,8 @@ class ElasticsearchAdapter(BaseAdapter):
             **kwargs
         )
         next_token = None
-        if len(response.get("hits", {}).get("hits", [])) > 0:
-            next_token = response["hits"]["hits"][-1]["sort"][0]
+        if len(response.get('hits', {}).get('hits', [])) > 0:
+            next_token = response['hits']['hits'][-1]['sort'][0]
         if normalize:
             response = self.__normalize_hits(response)
         return response, next_token
@@ -159,12 +159,10 @@ class ElasticsearchAdapter(BaseAdapter):
             normalized_hits.append(hit['_source'])
         return normalized_hits
 
-    def __create_template_body(self, use_patterns: bool = False, index_patterns=None,
-                               mappings: Optional[Dict[str, Any]] = None, special=None, **kwargs):
+    def __create_template_body(self, use_patterns: bool = False, index_patterns=None, mappings: Optional[Dict[str, Any]] = None, special=None, **kwargs):
         body = {
             'settings': self.__get_settings(**kwargs),
-            'mappings': mappings if mappings is not None else es_mapper.convert_schema_to_mapping(
-                self.model_schema_file, self.model_schema, special)
+            'mappings': mappings if mappings is not None else es_mapper.convert_schema_to_mapping(self.model_schema_file, self.model_schema, special)
         }
         if use_patterns and isinstance(index_patterns, list):
             body['index_patterns'] = index_patterns
@@ -172,8 +170,7 @@ class ElasticsearchAdapter(BaseAdapter):
             body['index_patterns'] = [index_patterns]
         return body
 
-    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[
-        str, Any]:  # pylint: disable=unused-argument
+    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[str, Any]: # pylint: disable=unused-argument
         if settings:
             return settings
         return {
