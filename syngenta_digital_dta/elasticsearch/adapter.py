@@ -135,16 +135,36 @@ class ElasticsearchAdapter(BaseAdapter):
             response = self.__normalize_hits(response)
         return response
 
+    def query_with_body_and_sort(self, body: Dict[str, Any], *, normalize: bool = False,
+                                 **kwargs: Unpack[ElasticsearchSearchKwargs]) -> Any:
+        # dfs_query_then_fetch improves accuracy of results scoring,
+        # but adds a round-trip to each shard, which can result in slower searches.
+        kwargs.setdefault('search_type', 'dfs_query_then_fetch')
+        response = self.connection.search(
+            index=self.index,
+            size=self.size,
+            body=body,
+            **kwargs
+        )
+        next_token = None
+        if len(response.get("hits", {}).get("hits", [])) > 0:
+            next_token = response["hits"]["hits"][-1]["sort"][0]
+        if normalize:
+            response = self.__normalize_hits(response)
+        return response, next_token
+
     def __normalize_hits(self, hits):
         normalized_hits = []
         for hit in hits.get('hits', {}).get('hits', []):
             normalized_hits.append(hit['_source'])
         return normalized_hits
 
-    def __create_template_body(self, use_patterns: bool = False, index_patterns=None, mappings: Optional[Dict[str, Any]] = None, special=None, **kwargs):
+    def __create_template_body(self, use_patterns: bool = False, index_patterns=None,
+                               mappings: Optional[Dict[str, Any]] = None, special=None, **kwargs):
         body = {
             'settings': self.__get_settings(**kwargs),
-            'mappings': mappings if mappings is not None else es_mapper.convert_schema_to_mapping(self.model_schema_file, self.model_schema, special)
+            'mappings': mappings if mappings is not None else es_mapper.convert_schema_to_mapping(
+                self.model_schema_file, self.model_schema, special)
         }
         if use_patterns and isinstance(index_patterns, list):
             body['index_patterns'] = index_patterns
@@ -152,7 +172,8 @@ class ElasticsearchAdapter(BaseAdapter):
             body['index_patterns'] = [index_patterns]
         return body
 
-    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[str, Any]: # pylint: disable=unused-argument
+    def __get_settings(self, settings: Optional[Dict[str, Any]] = None, **kwargs) -> Dict[
+        str, Any]:  # pylint: disable=unused-argument
         if settings:
             return settings
         return {
