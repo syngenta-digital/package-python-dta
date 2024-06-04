@@ -58,13 +58,14 @@ class S3AdapterTest(unittest.TestCase):
             s3_path='test/test-create.json',
             data={'test': True},
             json=True,
-            tags={'partener':'ingestor', 'integrationAccountReference':'dummy_account'}
+            tags={'partener': 'ingestor', 'integrationAccountReference': 'dummy_account'}
         )
-        tags_result =  self.adapter.client.get_object_tagging(
+        tags_result = self.adapter.client.get_object_tagging(
             Bucket=self.bucket,
             Key='test/test-create.json',
         )
-        self.assertListEqual(tags_result['TagSet'], [{'Key': 'partener', 'Value': 'ingestor'}, {'Key': 'integrationAccountReference', 'Value': 'dummy_account'}])
+        self.assertListEqual(tags_result['TagSet'], [{'Key': 'partener', 'Value': 'ingestor'},
+                                                     {'Key': 'integrationAccountReference', 'Value': 'dummy_account'}])
 
     def test_add_tags(self):
         # create object
@@ -74,7 +75,7 @@ class S3AdapterTest(unittest.TestCase):
             json=True,
         )
         # make sure no tags exists for the created object
-        tags_result =  self.adapter.client.get_object_tagging(
+        tags_result = self.adapter.client.get_object_tagging(
             Bucket=self.bucket,
             Key='test/test-create2.json',
         )
@@ -82,14 +83,15 @@ class S3AdapterTest(unittest.TestCase):
         # modify tags
         self.adapter.put_object_tags(
             s3_path='test/test-create2.json',
-            tags={'partener':'ingestor', 'integrationAccountReference':'dummy_account'}
+            tags={'partener': 'ingestor', 'integrationAccountReference': 'dummy_account'}
         )
         # validate the existing tags
-        tags_result =  self.adapter.client.get_object_tagging(
+        tags_result = self.adapter.client.get_object_tagging(
             Bucket=self.bucket,
             Key='test/test-create2.json',
         )
-        self.assertListEqual(tags_result['TagSet'], [{'Key': 'partener', 'Value': 'ingestor'}, {'Key': 'integrationAccountReference', 'Value': 'dummy_account'}])
+        self.assertListEqual(tags_result['TagSet'], [{'Key': 'partener', 'Value': 'ingestor'},
+                                                     {'Key': 'integrationAccountReference', 'Value': 'dummy_account'}])
 
     def test_put_stream(self):
         url = 'https://github.com/syngenta-digital/package-python-dta/archive/refs/heads/master.zip'
@@ -168,7 +170,8 @@ class S3AdapterTest(unittest.TestCase):
         s3_path = 'test/test-multipart.json'
         results = self.adapter.multipart_upload(chunks=chunks, s3_path=s3_path)
         self.assertEqual(results['ResponseMetadata']['HTTPStatusCode'], 200)
-        self.assertEqual(results['Location'], 'http://unit-test.s3.localhost.localstack.cloud:4566/test/test-multipart.json')
+        self.assertEqual(results['Location'],
+                         'http://unit-test.s3.localhost.localstack.cloud:4566/test/test-multipart.json')
 
     def test_create_presigned_read_url(self):
         s3_path = 'test/test-presigned-url.json'
@@ -258,3 +261,26 @@ class S3AdapterTest(unittest.TestCase):
             "http://localhost:4566/unit-test/my_s3_dir/my_s3_folder/my_s3_file.txt",
             url
         )
+
+    @mock.patch("syngenta_digital_dta.common.publisher.publish")
+    @mock.patch("syngenta_digital_dta.s3.adapter.S3Adapter.create_public_url")
+    def test_publish_notification(self, mock_create_public_url, mock_publish):
+        presigned_url = "http://some_url.com"
+        record_type = "somerecordtype"
+        mock_create_public_url.return_value = presigned_url
+        mock_publish.return_value = None
+        adapter = syngenta_digital_dta.adapter(
+            engine='s3',
+            endpoint=self.endpoint,
+            bucket=self.bucket,
+            sns_attributes={
+                "record_type": record_type
+            }
+        )
+        adapter.publish_notification()
+        mock_publish.assert_called_with(endpoint=None, arn=None,
+                                        attributes={'operation': {'DataType': 'String', 'StringValue': 'create'},
+                                                    'record_type': {'DataType': 'String',
+                                                                    'StringValue': record_type}},
+                                        data={'presigned_url': presigned_url}, fifo_group_id=None,
+                                        fifo_duplication_id=None)
