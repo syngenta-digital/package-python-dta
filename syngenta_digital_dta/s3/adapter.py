@@ -63,7 +63,7 @@ class S3Adapter(BaseAdapter):
             super().publish('create', self.__generate_publish_data(**kwargs), **kwargs)
         return results
 
-    def publish_notification_only(self, **kwargs):
+    def publish_notification(self, **kwargs):
         super().publish('create', self.__generate_publish_data(**kwargs), **kwargs)
 
     def put_object_tags(self, **kwargs):

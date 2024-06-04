@@ -264,7 +264,7 @@ class S3AdapterTest(unittest.TestCase):
 
     @mock.patch("syngenta_digital_dta.common.publisher.publish")
     @mock.patch("syngenta_digital_dta.s3.adapter.S3Adapter.create_public_url")
-    def test_publish_notification_only(self, mock_create_public_url, mock_publish):
+    def test_publish_notification(self, mock_create_public_url, mock_publish):
         presigned_url = "http://some_url.com"
         record_type = "somerecordtype"
         mock_create_public_url.return_value = presigned_url
@@ -277,7 +277,7 @@ class S3AdapterTest(unittest.TestCase):
                 "record_type": record_type
             }
         )
-        adapter.publish_notification_only()
+        adapter.publish_notification()
         mock_publish.assert_called_with(endpoint=None, arn=None,
                                         attributes={'operation': {'DataType': 'String', 'StringValue': 'create'},
                                                     'record_type': {'DataType': 'String',
